@@ -24,8 +24,13 @@ impl Program {
         let buffer = buffer.make_exec().unwrap();
 
         unsafe {
-            let func: unsafe extern "C" fn(*mut u8) = std::mem::transmute(buffer.as_ptr());
-            func(memory.as_mut_ptr());
+            let func: unsafe extern "C" fn(*mut u8) -> *mut std::io::Error = std::mem::transmute(buffer.as_ptr());
+
+            let error = func(memory.as_mut_ptr());
+
+            if !error.is_null() {
+                return Err((*Box::from_raw(error)).to_string());
+            }
         }
 
         Ok(())

@@ -1,4 +1,5 @@
 use crate::parser::Node;
+use crate::fast_jit::code_gen::{write, read};
 use dynasmrt::{dynasm, x64::X64Relocation, DynasmApi, DynasmLabelApi, VecAssembler};
 
 pub(crate) fn emit(code: &Vec<Node>) -> Result<Vec<u8>, String> {
@@ -39,19 +40,20 @@ pub(crate) fn emit(code: &Vec<Node>) -> Result<Vec<u8>, String> {
             },
             Node::Write => dynasm! { bytes
                 ; .arch x64
-                ; mov rax, 1 // write syscall
-                ; mov rdi, 1 // stdout
-                ; lea rsi, [r12 + r13] // buf address
-                ; mov rdx, 1 // length
-                ; syscall
+                ; mov rax, QWORD write as *const() as i64
+                ; mov rdi, [r12 + r13] // buf address
+                ; call rax
+                ; cmp rax, 0
+                ; jne ->exit
             },
             Node::Read => dynasm! { bytes
                 ; .arch x64
-                ; mov rax, 0 // read syscall
-                ; mov rdi, 0 // stdin
-                ; lea rsi, [r12 + r13] // buf address
-                ; mov rdx, 1 // length
-                ; syscall
+                ; mov rax, QWORD read as *const() as i64
+                ; lea rdi, [r12 + r13] // buf address
+                ; call rax
+                ; cmp rax, 0
+                ; jne ->exit
+                ; ret
             },
             Node::LoopBegin => {
                 let start_label = bytes.new_dynamic_label();
