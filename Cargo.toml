@@ -5,4 +5,7 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.5.23", features = ["derive"] }
+cranelift = "0.115.0"
+cranelift-native = "0.115.0"
 dynasmrt = "3.0.1"
+memmap2 = "0.9.5"

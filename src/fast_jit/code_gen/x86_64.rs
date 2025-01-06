@@ -1,5 +1,5 @@
 use crate::parser::Node;
-use crate::fast_jit::code_gen::{write, read};
+use crate::{read, write};
 use dynasmrt::{dynasm, x64::X64Relocation, DynasmApi, DynasmLabelApi, VecAssembler};
 
 pub(crate) fn emit(code: &Vec<Node>) -> Result<Vec<u8>, String> {
@@ -80,6 +80,10 @@ pub(crate) fn emit(code: &Vec<Node>) -> Result<Vec<u8>, String> {
                 }
             }
         }
+    }
+
+    if !loop_labels.is_empty() {
+        return Err("Unclosing loop found.".to_string());
     }
 
     dynasm! { bytes
